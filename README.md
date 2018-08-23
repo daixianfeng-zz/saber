@@ -1,9 +1,10 @@
 # react 开发手册
 
 ###### author: daixianfeng
+###### version: 0.1
 
 ### 1. 前言
-- 本文档用于指导前端开发者进行react前端开发，统一react开发组件使用规范
+- 本文档用于记录个人开发 react 的学习成果
 - 任何问题或建议，请联系 dai_xianfeng@hotmail.com
 
 ### 2. 基础脚手架
