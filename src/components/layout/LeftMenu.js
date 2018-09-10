@@ -1,26 +1,35 @@
 import React from 'react'
+import { connect } from 'react-redux'
+import { Link } from "react-router-dom";
 import { Menu, Icon } from 'antd';
 
 const SubMenu = Menu.SubMenu;
-const MenuItemGroup = Menu.ItemGroup;
 
 class LeftMenu extends React.Component {
+
     render () {
+        const { user } = this.props;
         return (
             <Menu mode="inline">
-                <SubMenu key="sub1" title={<span><Icon type="mail" /><span>第一组</span></span>}>
-                    <MenuItemGroup key="g1" title="第一项">
-                        <Menu.Item key="1">第一条</Menu.Item>
-                        <Menu.Item key="2">第二条</Menu.Item>
-                    </MenuItemGroup>
+                <SubMenu key="sub1" title={<span><Icon type="folder" /><span>文件夹</span></span>}>
+                    <Menu.Item key="1"><Link to="/folder/list">文件列表</Link></Menu.Item>
                 </SubMenu>
-                <SubMenu key="sub2" title="第二组">
-                    <Menu.Item key="3">第三条</Menu.Item>
-                    <Menu.Item key="4">第四条</Menu.Item>
-                </SubMenu>
+                {
+                    user && user.role && user.role.indexOf(['ROLE_ADMIN', 'ROLE_CAPITAL']) !== -1  ?
+                    (
+                        <SubMenu key="sub2" title={<span><Icon type="cloud" /><span>传输列表</span></span>}>
+                            <Menu.Item key="1"><Link to="/transmission/uploading">正在上传</Link></Menu.Item>
+                            <Menu.Item key="2"><Link to="/transmission/uploaded">已上传</Link></Menu.Item>
+                        </SubMenu>
+                    )
+                    :
+                    ('')
+                }
             </Menu>
         )
     }
 }
 
-export default LeftMenu
+export default connect((state)=>{
+    return { user: state.user } 
+})(LeftMenu)

@@ -8,6 +8,7 @@ let defaultConfig = {
         'Accept': 'application/json'
     },
     body: {},
+    type: 'json',
     credentials: 'same-origin',
 };
 let onBeforeSend = [];
@@ -69,8 +70,11 @@ const request = {
         }
 
         const res = await fetch(req,sendOptions);
-        const resBody = checkResponse(res);
+        let resBody = checkResponse(res);
 
+        if(reqItem.type === 'json'){
+            resBody = JSON.parse(resBody);
+        }
         if(resBody){
             return Promise.resolve(resBody, res);
         }else{

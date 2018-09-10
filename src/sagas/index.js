@@ -1,20 +1,12 @@
-import { call, put, takeEvery, takeLatest } from 'redux-saga/effects'
+import { all, call } from 'redux-saga/effects'
+import user from './user'
+import folder from './folder'
+import search from './search'
 
-function getUserInfo(){
-    fetch('/portal/userInfo.json')
-        .then(response => response.json())
-        .then(json => json.data.user)
+export default function* root(){
+    yield all([
+        call(user),
+        call(folder),
+        call(search),
+    ])
 }
-function* fetchUser(action) {
-    try {
-       const user = yield call(getUserInfo);
-       yield put({type: "USER_FETCH_SUCCEEDED", user: user});
-    } catch (e) {
-       yield put({type: "USER_FETCH_FAILED", message: e.message});
-    }
-}
-function* mySaga() {
-  yield takeEvery("USER_FETCH_REQUESTED", fetchUser);
-}
-
-export default mySaga

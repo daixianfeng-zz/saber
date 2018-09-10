@@ -1,15 +1,19 @@
 import { combineReducers } from 'redux'
 import errorPage from './error'
+import dialog from './dialog'
+import user from './user'
+import folder from './folder'
+import search from './search'
+import uploading from './uploading'
+import history from './history'
 
-function changeUser(state={}, action){
-    switch(action.type){
-        case 'login': return action.user;
-        case 'logout': return {};
-        default: return state;
-    }
-}
 const allReducers = combineReducers({
-    changeUser,
+    user,
+    folder,
+    search,
+    uploading,
+    history,
+    dialog,
     errorPage
 })
 

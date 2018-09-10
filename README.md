@@ -5,7 +5,6 @@
 
 ### 1. 前言
 - 本文档用于记录个人开发 react 的学习成果
-- 任何问题或建议，请联系 dai_xianfeng@hotmail.com
 
 ### 2. 基础脚手架
 - create-react-app
@@ -16,10 +15,23 @@
 ### 3. 手动配置
 - 手动配置 webpack： 
 
-	npm run eject
-	yarn eject
+    npm run eject
+    yarn eject
 
 - 该命令将默认的 webpack 配置暴露出来， 是一个不可逆的操作， 暴露出的配置修改后即可生效
+- ps: 有时候git需要发生变化时，需要先提交代码， 才能执行， 否则会报错
+
+#### 3.1 调试
+- webpack.config.js
+```
+    // 调试时显示源码（jsx语法糖）， 断点有可能打不上
+    devtool: 'cheap-module-source-map', 
+```
+```
+    // 调试时显示 jsx 转义后的js语法， 文件位置不发生变化， 有助于打断点
+    devtool: '#cheap-source-map',
+```
+
 
 ### 4. 扩展内容
 
@@ -27,43 +39,45 @@
 - npm install --save-dev less
 - npm install --save-dev less-loader
 - 添加 rules 规则， 注意执行顺序（从后往前执行）
+- 使用 modules: true 选项，开启 css-modules （选择性开启）
 
 ```
-	{
-		test: /\.less$/,
-		use: [
-			require.resolve('style-loader'),
-			{
-				loader: require.resolve('css-loader'),
-				options: {
-					importLoaders: 1,
-				},
-			},
-			{
-				loader: require.resolve('postcss-loader'),
-				options: {
-					// Necessary for external CSS imports to work
-					// https://github.com/facebookincubator/create-react-app/issues/2677
-					ident: 'postcss',
-					plugins: () => [
-						require('postcss-flexbugs-fixes'),
-						autoprefixer({
-							browsers: [
-							'>1%',
-							'last 4 versions',
-							'Firefox ESR',
-							'not ie < 9', // React doesn't support IE8 anyway
-							],
-							flexbox: 'no-2009',
-						}),
-					],
-				},
-			},
-			{
-				loader: require.resolve('less-loader') // compiles Less to CSS
-			},
-		],
-	},
+    {
+        test: /\.less$/,
+        use: [
+            require.resolve('style-loader'),
+            {
+                loader: require.resolve('css-loader'),
+                options: {
+                    modules: true,
+                    importLoaders: 1,
+                },
+            },
+            {
+                loader: require.resolve('postcss-loader'),
+                options: {
+                    // Necessary for external CSS imports to work
+                    // https://github.com/facebookincubator/create-react-app/issues/2677
+                    ident: 'postcss',
+                    plugins: () => [
+                        require('postcss-flexbugs-fixes'),
+                        autoprefixer({
+                            browsers: [
+                            '>1%',
+                            'last 4 versions',
+                            'Firefox ESR',
+                            'not ie < 9', // React doesn't support IE8 anyway
+                            ],
+                            flexbox: 'no-2009',
+                        }),
+                    ],
+                },
+            },
+            {
+                loader: require.resolve('less-loader') // compiles Less to CSS
+            },
+        ],
+    },
 ```
 
 #### 4.2 react-router
@@ -71,66 +85,93 @@
 - npm install --save connected-react-router
 
 ```
-	import { BrowserRouter as Router, Route } from 'react-router-dom'
-	import createHistory from "history/createBrowserHistory";
-	import { connectRouter, routerMiddleware } from 'connected-react-router'
+    import { BrowserRouter as Router, Route } from 'react-router-dom'
+    import createHistory from "history/createBrowserHistory";
+    import { connectRouter, routerMiddleware } from 'connected-react-router'
 ```
 
+- 配合 redux-saga 一起使用， 要注意 saga 中间件顺序要在 history 前，否则 saga 无法触发 history 改变
+```
+    const history = createBrowserHistory()
+    const sagaMiddleware = createSagaMiddleware()
+    const store = createStore(
+        connectRouter(history)(reducer),
+        window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
+        compose(
+            applyMiddleware(sagaMiddleware),
+            applyMiddleware(routerMiddleware(history)),
+        ),
+    )
+    sagaMiddleware.run(rootSaga)
+```
+
+- 路由使用传值构造组件的方式， 判断是否满足角色权限
+- 再使用传值构造组件的方式， 包裹各种不同的 layout ， 将主体内容以 component 参数传入
+
 #### 4.3 redux
+- 定义 reducer， 通过中间件存储到 store
+- 通过 store.dispatch 触发状态变化
+- 通过 return 更新状态
+- 通过 connect 方法传递到使用的组件中
+
 - npm install --save-dev redux
 - npm install --save-dev react-redux
 - npm install --save-dev redux-devtools
 
 ```
-	import {createStore, combineReducers, applyMiddleware} from 'redux';
-	import {Provider, connect} from 'react-redux';
+    import {createStore, combineReducers, applyMiddleware} from 'redux';
+    import {Provider, connect} from 'react-redux';
 
-	
+    
 ```
 
 ```
-	import React from 'react'
-	import ReactDOM from 'react-dom'
-	import { createStore } from 'redux'
-	import { Provider } from 'react-redux'
-	import reducer from './reducers'
-	import PropTypes from 'prop-types'
-	import Routes from './routes'
-	const store = createStore(reducer)
+    import React from 'react'
+    import ReactDOM from 'react-dom'
+    import { createStore } from 'redux'
+    import { Provider } from 'react-redux'
+    import reducer from './reducers'
+    import PropTypes from 'prop-types'
+    import Routes from './routes'
+    const store = createStore(reducer)
 
-	const Root = ({ store }) => (
-		<Provider store={ store }>
-			<Routes />
-		</Provider>
-	)
-	Root.propTypes = {
-		store: PropTypes.object.isRequired
-	}
-	ReactDOM.render(<Root store={store} />, document.getElementById('root'));
+    const Root = ({ store }) => (
+        <Provider store={ store }>
+            <Routes />
+        </Provider>
+    )
+    Root.propTypes = {
+        store: PropTypes.object.isRequired
+    }
+    ReactDOM.render(<Root store={store} />, document.getElementById('root'));
 ```
 
 #### 4.4 redux-saga
+- 使用 redux-saga 处理异步操作带来的全局状态变更
+- saga 中定义的 reducer 同样使用 store.dispatch 来触发
+- saga 中获取完异步返回的结果后， 使用 put 方法， 触发原有 reducer 定义的状态变更
+
 - npm install --save-dev redux-saga
 
 ```
-	import { createStore, applyMiddleware } from 'redux'
-	import createSagaMiddleware from 'redux-saga'
+    import { createStore, applyMiddleware } from 'redux'
+    import createSagaMiddleware from 'redux-saga'
 
-	import reducer from './reducers'
-	import mySaga from './sagas'
+    import reducer from './reducers'
+    import mySaga from './sagas'
 
-	// create the saga middleware
-	const sagaMiddleware = createSagaMiddleware()
-	// mount it on the Store
-	const store = createStore(
-	  reducer,
-	  applyMiddleware(sagaMiddleware)
-	)
+    // create the saga middleware
+    const sagaMiddleware = createSagaMiddleware()
+    // mount it on the Store
+    const store = createStore(
+      reducer,
+      applyMiddleware(sagaMiddleware)
+    )
 
-	// then run the saga
-	sagaMiddleware.run(mySaga)
+    // then run the saga
+    sagaMiddleware.run(mySaga)
 
-	// render the application
+    // render the application
 ```
 
 #### 4.5 antd
@@ -139,15 +180,15 @@
 - npm install --save-dev antd-mobile
 
 ```
-	// webpack.config.js
-	// .babelrc or babel-loader option
-	{
-		"plugins": [
-			["import", { "libraryName": "antd", "libraryDirectory": "es", "style": "css" }],
-			["import", { "libraryName": "ant-mobile", "libraryDirectory": "lib", "style": "css" }, "ant-mobile"], 
-			// `style: true` 会加载 less 文件（*不知道为啥不管用*）
-		]
-	}
+    // webpack.config.js
+    // .babelrc or babel-loader option
+    {
+        "plugins": [
+            ["import", { "libraryName": "antd", "libraryDirectory": "es", "style": "css" }],
+            ["import", { "libraryName": "ant-mobile", "libraryDirectory": "lib", "style": "css" }, "ant-mobile"], 
+            // `style: true` 会加载 less 文件（*不知道为啥不管用*）
+        ]
+    }
 ```
 
 #### 4.6 axios or fetch
@@ -157,10 +198,10 @@
 - npm install --save-dev babel-preset-es2016
 
 ```
-	loader: require.resolve('babel-loader'),
+    loader: require.resolve('babel-loader'),
     options: {
-		"presets": ["es2016"],
-	}
+        "presets": ["es2016"],
+    }
 ```
 
 #### 4.x 其他资源
@@ -171,30 +212,28 @@
 ### 5. 文件结构
 
 ```
-	src
-		| style
-			| main
-			| widget
-		| config
-			index.js //-项目内容配置文件
-			hash.js //-定义枚举
-		| actions
-		| reducers
-		| stores
-		| models
-		| utils
-			| request.js
-			| format.js
-			| common.js
-		| components
-		| pages
-		App.js //-最顶端组件
-		index.js //-入口文件
-		routes.js //-路由文件
-		index.html //-入口文件
-		registerServiceWorker.js //-离线缓存
-	public
-		| [libName]
+    src
+        | style
+            | main
+            | widget
+        | config
+            index.js //-项目内容配置文件
+            hash.js //-定义枚举
+        | reducers
+        | sagas
+        | utils
+            | request.js
+            | format.js
+            | common.js
+        | components
+        | pages
+        App.js //-最顶端组件
+        index.js //-入口文件
+        routes.js //-路由文件
+        index.html //-入口文件
+        registerServiceWorker.js //-离线缓存
+    public
+        | [libName]
 ```
 
 ### 6. 文件内容 - 关系
@@ -207,29 +246,29 @@
 ### 7. react 组件生命周期
 - 组件在初始化时会触发5个钩子函数：
 + 1、getDefaultProps()
-	设置默认的props，也可以用dufaultProps设置组件的默认属性。
+    设置默认的props，也可以用dufaultProps设置组件的默认属性。
 + 2、getInitialState()
-	在使用es6的class语法时是没有这个钩子函数的，可以直接在constructor中定义this.state。此时可以访问this.props。
+    在使用es6的class语法时是没有这个钩子函数的，可以直接在constructor中定义this.state。此时可以访问this.props。
 + 3、componentWillMount()
-	组件初始化时只调用，以后组件更新不调用，整个生命周期只调用一次，此时可以修改state。
+    组件初始化时只调用，以后组件更新不调用，整个生命周期只调用一次，此时可以修改state。
 + 4、 render()
-	react最重要的步骤，创建虚拟dom，进行diff算法，更新dom树都在此进行。此时就不能更改state了。
+    react最重要的步骤，创建虚拟dom，进行diff算法，更新dom树都在此进行。此时就不能更改state了。
 + 5、componentDidMount()
-	组件渲染之后调用，可以通过this.getDOMNode()获取和操作dom节点，只调用一次。
+    组件渲染之后调用，可以通过this.getDOMNode()获取和操作dom节点，只调用一次。
 - 在更新时也会触发5个钩子函数：
 + 6、componentWillReceivePorps(nextProps)
-	组件初始化时不调用，组件接受新的props时调用。
+    组件初始化时不调用，组件接受新的props时调用。
 + 7、shouldComponentUpdate(nextProps, nextState)
-	react性能优化非常重要的一环。组件接受新的state或者props时调用，我们可以设置在此对比前后两个props和state是否相同，如果相同则返回false阻止更新，因为相同的属性状态一定会生成相同的dom树，这样就不需要创造新的dom树和旧的dom树进行diff算法对比，节省大量性能，尤其是在dom结构复杂的时候。不过调用this.forceUpdate会跳过此步骤。
+    react性能优化非常重要的一环。组件接受新的state或者props时调用，我们可以设置在此对比前后两个props和state是否相同，如果相同则返回false阻止更新，因为相同的属性状态一定会生成相同的dom树，这样就不需要创造新的dom树和旧的dom树进行diff算法对比，节省大量性能，尤其是在dom结构复杂的时候。不过调用this.forceUpdate会跳过此步骤。
 + 8、componentWillUpdate(nextProps, nextState)
-	组件初始化时不调用，只有在组件将要更新时才调用，此时可以修改state
+    组件初始化时不调用，只有在组件将要更新时才调用，此时可以修改state
 + 9、render()
-	根据 state 渲染组件
+    根据 state 渲染组件
 + 10、componentDidUpdate()
-	组件初始化时不调用，组件更新完成后调用，此时可以获取dom节点。
+    组件初始化时不调用，组件更新完成后调用，此时可以获取dom节点。
 - 卸载钩子函数
 + 11、componentWillUnmount()
-	组件将要卸载时调用，一些事件监听和定时器需要在此时清除。
+    组件将要卸载时调用，一些事件监听和定时器需要在此时清除。
 
 ### 8. react-router 按需加载（应对超多页面）
 - Route的component改为getComponent
@@ -244,13 +283,13 @@
 - 代理：
 
 ```
-	// package.json
-	"proxy": {
-		"json$": {
-			"target": "http://127.0.0.1:8000",
-			"changeOrigin": true
-		}
-	}
+    // package.json
+    "proxy": {
+        "json$": {
+            "target": "http://127.0.0.1:8000",
+            "changeOrigin": true
+        }
+    }
 ```
 
 - mockjs：
@@ -282,22 +321,22 @@
 - 使用 react-router 中 Route 组件的 render 属性为基础， 创建一个 Layout 路由， 通过传递中间内容组件渲染
 
 ```
-	// components/layout/PageLayout.js
-	import React from 'react'
-	import { Route } from 'react-router-dom'
-	const PageLayout = ({component: Component, ...rest}) => (
-		<Route {...rest} render={matchProps => (
-			<div className="page-layout">
-				<header className="top"> top side</header>
-				<div className="main-container"><Component {...matchProps} /></div>
-				<footer className="bottmo"> top side</footer>
-			</div>
-		)} />
-	)
-	export default PageLayout
+    // components/layout/PageLayout.js
+    import React from 'react'
+    import { Route } from 'react-router-dom'
+    const PageLayout = ({component: Component, ...rest}) => (
+        <Route {...rest} render={matchProps => (
+            <div className="page-layout">
+                <header className="top"> top side</header>
+                <div className="main-container"><Component {...matchProps} /></div>
+                <footer className="bottmo"> top side</footer>
+            </div>
+        )} />
+    )
+    export default PageLayout
 
-	// routes.js
-	<Router>
+    // routes.js
+    <Router>
         <Switch>
             <PageLayout exact path="/a" component={ A }></PageLayout>
             <PageLayout exact path="/a/b" component={ AB }></PageLayout>

@@ -29,6 +29,7 @@ module.exports = {
   // You may want 'eval' instead if you prefer to see the compiled output in DevTools.
   // See the discussion in https://github.com/facebookincubator/create-react-app/issues/343.
   devtool: 'cheap-module-source-map',
+  // devtool: '#cheap-source-map',
   // These are the "entry points" to our application.
   // This means they will be the "root" imports that are included in JS bundle.
   // The first two entry points enable "hot" CSS and auto-refreshes for JS.
@@ -144,26 +145,26 @@ module.exports = {
             include: paths.appSrc,
             loader: require.resolve('babel-loader'),
             options: {
+              presets: ["es2016"],
+              plugins: [
+                ["import", { "libraryName": "antd", "libraryDirectory": "es", "style": "css" }],
+              ],
               
               // This is a feature of `babel-loader` for webpack (not Babel itself).
               // It enables caching results in ./node_modules/.cache/babel-loader/
               // directory for faster rebuilds.
               cacheDirectory: true,
-              "presets": ["es2016"],
-              plugins: [
-                ["import", { "libraryName": "antd", "style": "css" }, "ant"],
-                ["import", { "libraryName": "ant-mobile", "libraryDirectory": "lib", "style": "css" }, "ant-mobile"],
-              ], // `style: true` 会加载 less 文件
             },
-            
           },
           {
             test: /\.less$/,
+            exclude: [/node_modules/],
             use: [
               require.resolve('style-loader'),
               {
                 loader: require.resolve('css-loader'),
                 options: {
+                  // modules: true,
                   importLoaders: 1,
                 },
               },
@@ -177,10 +178,10 @@ module.exports = {
                     require('postcss-flexbugs-fixes'),
                     autoprefixer({
                       browsers: [
-                        '>1%',
-                        'last 4 versions',
-                        'Firefox ESR',
-                        'not ie < 9', // React doesn't support IE8 anyway
+                      '>1%',
+                      'last 4 versions',
+                      'Firefox ESR',
+                      'not ie < 9', // React doesn't support IE8 anyway
                       ],
                       flexbox: 'no-2009',
                     }),
@@ -201,10 +202,10 @@ module.exports = {
             test: /\.css$/,
             use: [
               require.resolve('style-loader'),
-              
               {
                 loader: require.resolve('css-loader'),
                 options: {
+                  // modules: true,
                   importLoaders: 1,
                 },
               },

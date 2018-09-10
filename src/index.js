@@ -6,7 +6,7 @@ import { connectRouter, routerMiddleware, ConnectedRouter } from 'connected-reac
 import { createBrowserHistory } from 'history'
 import reducer from './reducers'
 import createSagaMiddleware from 'redux-saga'
-import mySaga from './sagas'
+import rootSaga from './sagas'
 import PropTypes from 'prop-types'
 import Routes from './routes'
 import 'antd/dist/antd.css'
@@ -19,11 +19,11 @@ const store = createStore(
     connectRouter(history)(reducer),
     window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
     compose(
-        applyMiddleware(routerMiddleware(history)),
         applyMiddleware(sagaMiddleware),
+        applyMiddleware(routerMiddleware(history)),
     ),
 )
-sagaMiddleware.run(mySaga)
+sagaMiddleware.run(rootSaga)
 const Root = ({ store, history }) => (
     <Provider store={ store }>
         <ConnectedRouter history={history}>
@@ -32,7 +32,8 @@ const Root = ({ store, history }) => (
     </Provider>
 )
 Root.propTypes = {
-    store: PropTypes.object.isRequired
+    store: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired,
 }
 ReactDOM.render(<Root store={store} history={history} />, document.getElementById('root'));
 registerServiceWorker();
