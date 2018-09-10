@@ -1,7 +1,7 @@
 # react 开发手册
 
 ###### author: daixianfeng
-###### version: 0.1
+###### version: 0.2
 
 ### 1. 前言
 - 本文档用于记录个人开发 react 的学习成果
